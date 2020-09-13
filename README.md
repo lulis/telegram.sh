@@ -16,38 +16,38 @@ telegram.sh allows you to send such things via telegram.
 
 ```bash
 # Send a message to yourself, using a bot token and a chat_id.
-telegram -t 123456:AbcDefGhi-JklMnoPrw -c 12345 "Hello, World."
+telegram -t 123456:AbcDefGhi-JklMnoPrw -c 12345 -m "Hello, World."
 
 # You can define the token and chat_id in environment variables or config files.
 # Then you can just use
-telegram "Hello, World."
+telegram -m "Hello, World."
 
 # Split them into multiple lines
-telegram "Hello,"$'\n'"World."
-# or
-echo -e "Hello\nWorld." | telegram -
+telegram -m "Hello,"$'\n'"World."
+# or #FIXME
+# echo -e "Hello\nWorld." | telegram -
 
 # Or you send this one message to another chat:
-telegram -c 6789 "Hello, Mars."
+telegram -c 6789 -m "Hello, Mars."
 
 # You can also send messages to multiple chats:
-telegram -c 1234 -c 6789 "Hello, Planets."
+telegram -c 1234 -c 6789 -m "Hello, Planets."
 
-# Send stuff via stdin. It will automatically be sent as monospace code:
-ls -l | telegram -
+# Send stuff via stdin. It will automatically be sent as monospace code: #FIXME
+#ls -l | telegram -
 
 # Use markdown in your message (HTML is available as well):
-telegram -M "To *boldly* go, where _no man_ has gone before."
+telegram -M -m "To *boldly* go, where _no man_ has gone before."
 
 # Send a local file.
-telegram -f results.txt "Here are the results."
+telegram -f results.txt -m "Here are the results."
 
 # Or an image, giving you a preview and stuff.
 telegram -i solar_system.png # We don't need to send a message if we're
 # sending a file.
 
 # Use environment variables to tell curl to use a proxy server:
-HTTPS_PROXY="socks5://127.0.0.1:1234" telegram "Hello, World."
+HTTPS_PROXY="socks5://127.0.0.1:1234" telegram -m "Hello, World."
 # Check the curl documentation for more info about supported proxy
 # protocols.
 ```
@@ -71,7 +71,7 @@ easily use this tool without this.
     your chat id. If you don't have `jq` installed, it will print a bit of
     JSON data and tell you what to look for.
 * You now have your token and your chat id. Send yourself a first message:
-    `telegram -t <TOKEN> -c <CHAT ID> "Hello there."`
+    `telegram -t <TOKEN> -c <CHAT ID> -m "Hello there."`
 
 Carrying the token and the chat id around can be quite cumbersome. You can
 define them in 4 different ways:

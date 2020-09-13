@@ -28,12 +28,11 @@ hash jq >/dev/null 2>&1 && HAS_JQ=true
 
 help() {
 	version
-	echo "Usage: $0 [options] [-m message]"
-	echo
-	echo "    -m <message>     Text message to send."
-	echo "                     Message can be '-', in that case STDIN will be used."
+	echo "Usage: $0 [options]"
 	echo
 	echo "OPTIONS are:"
+	echo "    -m <MESSAGE>     Message text to send."
+#FIXME	echo "                     Message can be '-', in that case STDIN will be used."
 	echo "    -t <TOKEN>       Telegram bot token to use. See ENVIRONMENT for more information."
 	echo "    -c <CHAT_ID>     Chat to use as recipient. Can be given more than once. See ENVIRONMENT for more information."
 	echo "    -f <FILE>        Sends file."
@@ -73,6 +72,11 @@ version() {
 	echo "by Fabian Schlenz"
 }
 
+json_console() {
+	# based on https://stackoverflow.com/a/38607019
+	echo -n "$1" | grep -Eo '"[^"]*" *(: *([0-9]*|"[^"]*")[^{}\["]*|,)?|[^"\]\[\}\{]*|\{|\},?|\[|\],?|[0-9 ]*,?' | awk '{if ($0 ~ /^[}\]]/ ) offset-=1; printf "%*c%s\n", offset, " ", $0; if ($0 ~ /^[{\[]/) offset+=1}'
+}
+
 list_chats() {
 	log "$URL$TOKEN"
 	response=`curl $CURL_OPTIONS $URL$TOKEN/getUpdates`
@@ -99,7 +103,7 @@ list_chats() {
 		echo "If there are no chats listed or the chat you are looking for isn't there, try again after"
 		echo "sending a message to your bot via telegram."
 		echo
-		echo $response
+		json_console "$response"
 	fi
 }
 
@@ -184,7 +188,7 @@ while [ "$#" -gt 0 ]; do
 			;;
 		-m)
 			TEXT="$2"
-			if [ "$TEXT" = "-" ]; then shift ; fi
+			#if [ "$TEXT" = "-" ]; then shift ; fi
 			;;
 		-i)
 			IMAGE_FILE="$2"
@@ -251,28 +255,30 @@ if [ "$CRON_MODE" -eq 1 ] && [ "$CODE_MODE" -eq 1 ]; then
 	exit 1
 fi
 
-log "TOKEN is now $TOKEN"
-log "ACHAT is now $ACHAT"
+log "TOKEN is now '$TOKEN'"
+log "ACHAT is now '$ACHAT'"
+
+log "Importing token/chat env vars..."
 
 [ -z "$TOKEN" ] && TOKEN=$TELEGRAM_TOKEN
 [ -z "$ACHAT" ] && ACHAT=$TELEGRAM_CHAT
 
-log "TOKEN is now $TOKEN"
-log "ACHAT is now $ACHAT"
+log "TOKEN is now '$TOKEN'"
+log "ACHAT is now '$ACHAT'"
 
 log "Importing config file(s)..."
 
 [ -r /etc/telegram.sh.conf ] && . /etc/telegram.sh.conf
 [ -r ~/.telegram.sh ] && . ~/.telegram.sh
-[ -r ./.telegram.sh ] && . ./.telegram.sh
+#[ -r ./.telegram.sh ] && . ./.telegram.sh
 
 [ -z "$TOKEN" ] && TOKEN=$TELEGRAM_TOKEN
 [ -z "$ACHAT" ] && ACHAT=$TELEGRAM_CHAT
 [ -n "$TELEGRAM_DISABLE_WEB_PAGE_PREVIEW" ] && DISABLE_WEB_PAGE_PREVIEW="$TELEGRAM_DISABLE_WEB_PAGE_PREVIEW"
 [ -n "$TELEGRAM_DISABLE_NOTIFICATION" ] && DISABLE_NOTIFICATION="$TELEGRAM_DISABLE_NOTIFICATION"
 
-log "TOKEN is now $TOKEN"
-log "ACHAT is now $ACHAT"
+log "TOKEN is now '$TOKEN'"
+log "ACHAT is now '$ACHAT'"
 log "DISABLE_WEB_PAGE_PREVIEW is now $DISABLE_WEB_PAGE_PREVIEW"
 log "DISABLE_NOTIFICATION is now $DISABLE_NOTIFICATION"
 
@@ -298,7 +304,7 @@ fi
 
 log "Text: $TEXT"
 
-[ "$TEXT" = "-" ] && TEXT=$(</dev/stdin)
+#[ "$TEXT" = "-" ] && TEXT=$(</dev/stdin)
 
 log "Text: $TEXT"
 
@@ -417,7 +423,7 @@ for id in "$ACHAT"; do
 				;;
 			*)
 				echo "Telegram reported an error:"
-				echo $response
+				json_console "$response"
 				echo "Quitting."
 				exit 1
 		esac
