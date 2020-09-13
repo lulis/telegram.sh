@@ -2,7 +2,7 @@
 
 ## Notes
 
-This fork adapts the [original](/fabianonline/telegram.sh) to work on a simple shell `sh`.
+This fork adapts the [original](https://github.com/fabianonline/telegram.sh) to work on a simple shell `sh`.
 
 
 ## What does it do?
