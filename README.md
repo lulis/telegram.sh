@@ -1,5 +1,10 @@
 # telegram.sh
 
+## Notes
+
+This fork adapts the [original](/fabianonline/telegram.sh) to work on a simple shell `sh`.
+
+
 ## What does it do?
 
 Telegram offers the feature of bots. A bot allows automated systems and
