@@ -1,5 +1,8 @@
 #!/bin/sh
 
+
+# HELP AN USAGE
+
 SCRIPTNAME="$(basename $0)"
 VERSION="0.3.2-sh"
 
@@ -16,28 +19,33 @@ version() {
 	fi
 }
 
-help() {
+help_usage() {
 	version
-	echo "Usage: $SCRIPTNAME [options]"
-	echo
-	echo "OPTIONS"
-	echo "    -m <MESSAGE>     Message text to send"
-	echo "    -                Message from STDIN (piped) will be used"
-	echo "    -t <TOKEN>       Telegram bot token to use"
-	echo "    -c <CHAT_ID>     Chat to use as recipient"
-	echo "    -f <FILE>        Sends file"
-	echo "    -i <FILE>        Sends file as image (fail if is not a image)"
-	echo "    -T <TITLE>       Sets a title for the message"
-	echo "    -M               Enables Markdown processing"
-	echo "    -H               Enables HTML processing"
-	echo "    -C               Sends text as monospace code"
-	echo "    -l               Fetch known chat_ids"
-	echo "    -D               Disable link preview on text messages"
-	echo "    -N               Send message without notification sound"
-	echo "    -v               Verbose mode"
-	echo "    -n               Dry-run: don't send, only print"
-	echo "    -h               This help"
-	echo "    --version        Show version info"
+	echo " Usage: $SCRIPTNAME [options]"
+	echo " Options:"
+	echo "    -m <text>      Message text to send"
+	echo "    -              Get message from STDIN"
+	echo "    -f <file>      Send a file"
+	echo "    -i <file>      Send a file as image"
+	echo "    -T <title>     Title of the message"
+	echo "    -t <token>     Your telegram bot token"
+	echo "    -c <chat_id>   Chat to send message"
+	echo "    -l             List known chat_ids for current token"
+	echo "    -M             Enables Markdown processing"
+	echo "    -H             Enables HTML processing"
+	echo "    -C             Send text as monospace code"
+	echo "    -D             Disable link preview on text messages"
+	echo "    -N             Send message without notification sound"
+	echo "    -n             Dry-run: don't send, only print"
+	echo "    -v             Verbose mode"
+	echo "    -h             This help"
+	echo "    --config       Show info about config files"
+	echo "    --version      Show version info"
+	exit $1
+}
+
+help_config() {
+	version
 	echo
 	echo "The TOKEN and CHAT_ID will be searched in (latest has precedence):"
 	echo "  1) globally in /etc/telegram.sh.conf"
@@ -48,6 +56,16 @@ help() {
 	exit $1
 }
 
+
+# DEPENDENCIES
+
+for i in curl grep awk cut; do
+	if ! [ -x "$(command -v $i)" ]; then missingDep="$missingDep $i"; fi
+done
+[ -n "$missingDep" ] && { echo "This script requires: $missingDep"; exit 1; }
+
+
+# DEFINES
 
 TOKEN=""
 ACHAT=""
@@ -124,27 +142,28 @@ while [ "$#" -gt 0 ]; do
 		-n) DRY_RUN=true; shift ;;
 		-D) DISABLE_WEB_PAGE_PREVIEW=true; shift ;;
 		-N) DISABLE_NOTIFICATION=true; shift ;;
-		-h) help 0 ; exit ;;
+		-h) help_usage 0 ;;
+		--config) help_config 0 ;;
 		--version) version full ; exit ;;
 		-?|*) echo "Invalid option: '$1' \nUse $SCRIPTNAME -h for help." ; exit 1 ;;
 		esac
 done
 
-log "TOKEN is now '$TOKEN'"
-log "ACHAT is now '$ACHAT'"
+log "TOKEN is '$TOKEN'"
+log "ACHAT is '$ACHAT'"
 
 log "Importing token/chat env vars..."
-
 [ -z "$TOKEN" ] && TOKEN=$TELEGRAM_TOKEN
 [ -z "$ACHAT" ] && ACHAT=$TELEGRAM_CHAT
-
 log "TOKEN is now '$TOKEN'"
 log "ACHAT is now '$ACHAT'"
 
 log "Importing config file(s)..."
 
-[ -r /etc/telegram.sh.conf ] && . /etc/telegram.sh.conf
-[ -r ~/.telegram.sh ] && . ~/.telegram.sh
+for f in /etc/telegram.sh.conf ~/.telegram.sh; do
+	log "looking for $f"
+	[ -r $f ] && . $f
+done
 
 [ -z "$TOKEN" ] && TOKEN=$TELEGRAM_TOKEN
 [ -z "$ACHAT" ] && ACHAT=$TELEGRAM_CHAT
