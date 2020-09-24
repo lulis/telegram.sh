@@ -77,8 +77,8 @@ help_config() {
 
  Config file contents should be like:
 
-TOKEN=123456:AbcDefGhi-JlkMno
-CHAT_ID=12345678
+TOKEN=your-bot-secret-token
+CHAT_ID=a-chat-id
 
  See also: '$SCRIPTNAME' --bot'
 	exit $1

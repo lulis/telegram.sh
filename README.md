@@ -21,7 +21,7 @@ telegram.sh allows you to send such things via telegram.
 
 ```bash
 # Send a message to yourself, using a bot token and a chat_id.
-telegram -t 123456:AbcDefGhi-JklMnoPrw -c 12345 -m "Hello, World."
+telegram -t your-bot-secret-token -c a-chat-id -m "Hello, World."
 
 # You can define the token and chat_id in environment variables or config files.
 # Then you can just use
@@ -32,7 +32,7 @@ telegram -m "Hello,"$'\n'"World."
 echo -e "Hello\nWorld." | telegram -
 
 # Or you send this one message to another chat:
-telegram -c 6789 -m "Hello, Mars."
+telegram -c another-chat-id -m "Hello, Mars."
 
 # Send stuff via stdin as monospace code:
 ls -l | telegram -C -
@@ -88,10 +88,4 @@ You now have your token and your chat_id, try it:
 The earliest take precedence, so you can define general <token> in
 `~/telegram-sh.conf` and then overwrite it using `-t` on command line.
 
-Config file contents should be like:
-
-```
-TOKEN=123456:AbcDefGhi-JlkMno
-CHAT_ID=12345678
-```
-Please be aware that you should keep your token secret.
+See config file example: <telegram-sh.conf>.
