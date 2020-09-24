@@ -9,66 +9,94 @@ VERSION="0.3.2-sh"
 version() {
 	echo "telegram.sh $VERSION"
 	if [ "$1" = "full" ]; then
-		echo 
-		echo "A telegram client to work on simple shell sh."
-		echo "    https://github.com/lulis/telegram.sh"
-		echo 
-		echo "Based on original telegram.sh by Fabian Schlenz:"
-		echo "    https://github.com/fabianonline/telegram.sh"
-		echo 
+		echo "
+ A telegram client to work on simple sh shell
+   https://github.com/lulis/telegram.sh
+
+ Based on original telegram.sh by Fabian Schlenz"
 	fi
 }
 
 help_usage() {
 	version
-	echo " Usage: $SCRIPTNAME [options]"
-	echo " Options:"
-	echo "    -m <text>      Message text to send"
-	echo "    -              Get message from STDIN"
-	echo "    -f <file>      Send a file"
-	echo "    -i <file>      Send a file as image"
-	echo "    -T <title>     Title of the message"
-	echo "    -t <token>     Your telegram bot token"
-	echo "    -c <chat_id>   Chat to send message"
-	echo "    -l             List known chat_ids for current token"
-	echo "    -M             Enables Markdown processing"
-	echo "    -H             Enables HTML processing"
-	echo "    -C             Send text as monospace code"
-	echo "    -D             Disable link preview on text messages"
-	echo "    -N             Send message without notification sound"
-	echo "    -n             Dry-run: don't send, only print"
-	echo "    -v             Verbose mode"
-	echo "    -h             This help"
-	echo "    --config       Show info about config files"
-	echo "    --version      Show version info"
+	echo '
+ Usage: '$SCRIPTNAME' [options]
+ Options:
+   -m <text>      Message text to send
+   -              Get message from STDIN
+   -f <file>      Send a file
+   -i <file>      Send a file as image
+   -T <title>     Title of the message
+   -t <token>     Your telegram bot token
+   -c <chat_id>   Chat to send message
+   -l             List known chat_ids for current token
+   -M             Enables Markdown processing
+   -H             Enables HTML processing
+   -C             Send text as monospace code
+   -D             Disable link preview on text messages
+   -N             Send message without notification sound
+   -n             Dry-run: do not send, only print
+   -v             Verbose mode
+   -h, --help     This help
+   --bot          Show info about creating a bot
+   --config       Show info about configuration files
+   --version      Show version info'
+	exit $1
+}
+
+help_bot() {
+	version
+	echo '
+ To create a new bot on Telegram:
+
+  * Search for the user @botfather and start to chat
+  * Create a new bot sending /newbot
+  * Keep the given token (and keep it secret!)
+  * Send any message to your new bot to activate it
+  * Find your chat_id running: '$SCRIPTNAME' -t <token> -l
+
+ You now have your token and your chat_id, try it:
+  '$SCRIPTNAME' -t <token> -c <chat_id> -m "Hello there!"
+
+ See also: '$SCRIPTNAME' --config'
 	exit $1
 }
 
 help_config() {
 	version
-	echo
-	echo "The TOKEN and CHAT_ID will be searched in (latest has precedence):"
-	echo "  1) globally in /etc/telegram.sh.conf"
-	echo "  2) user-local in ~/.telegram.sh"
-	echo "  3) environment variables TELEGRAM_TOKEN and TELEGRAM_CHAT"
-	echo "  4) options -t and -c"
-	echo
+	echo '
+ You can define <token> and <chat_id> by:
+
+  1. Command line options: -t <token> -c <chat_id>
+  2. Environment variables: TELEGRAM_TOKEN and TELEGRAM_CHAT
+  3. User-based config file: ~/.telegram-sh.conf
+  4. Global config file: /etc/telegram-sh.conf
+
+ The earliest take precedence, so you can define general <token> in
+ ~/telegram-sh.conf and then overwrite it using -t on command line.
+
+ Config file contents should be like:
+
+TOKEN=123456:AbcDefGhi-JlkMno
+CHAT_ID=12345678
+
+ See also: '$SCRIPTNAME' --bot'
 	exit $1
 }
 
 
 # DEPENDENCIES
 
-for i in curl grep awk cut; do
+for i in curl grep awk cut wc; do
 	if ! [ -x "$(command -v $i)" ]; then missingDep="$missingDep $i"; fi
 done
-[ -n "$missingDep" ] && { echo "This script requires: $missingDep"; exit 1; }
+[ -n "$missingDep" ] && { echo "Please install required dependencies: $missingDep"; exit 1; }
 
 
 # DEFINES
 
 TOKEN=""
-ACHAT=""
+CHAT=""
 DEBUG=false
 DRY_RUN=false
 IMAGE_FILE=""
@@ -128,7 +156,7 @@ ARGNUM="$#"
 while [ "$#" -gt 0 ]; do
 	case $1 in
 		-t) TOKEN="$2"; shift 2 ;;
-		-c) ACHAT="$2"; shift 2 ;;
+		-c) CHAT="$2"; shift 2 ;;
 		-m) TEXT="$2"; shift 2 ;;
 		-) TEXT="-"; shift ;;
 		-i) IMAGE_FILE="$2"; shift 2 ;;
@@ -142,45 +170,36 @@ while [ "$#" -gt 0 ]; do
 		-n) DRY_RUN=true; shift ;;
 		-D) DISABLE_WEB_PAGE_PREVIEW=true; shift ;;
 		-N) DISABLE_NOTIFICATION=true; shift ;;
-		-h) help_usage 0 ;;
+		-h|--help) help_usage 0 ;;
+		--bot) help_bot 0 ;;
 		--config) help_config 0 ;;
 		--version) version full ; exit ;;
 		-?|*) echo "Invalid option: '$1' \nUse $SCRIPTNAME -h for help." ; exit 1 ;;
 		esac
 done
 
-log "TOKEN is '$TOKEN'"
-log "ACHAT is '$ACHAT'"
+log "Option TOKEN is '$TOKEN'"
+log "Option CHAT is '$CHAT'"
 
-log "Importing token/chat env vars..."
-[ -z "$TOKEN" ] && TOKEN=$TELEGRAM_TOKEN
-[ -z "$ACHAT" ] && ACHAT=$TELEGRAM_CHAT
-log "TOKEN is now '$TOKEN'"
-log "ACHAT is now '$ACHAT'"
+log "Importing env vars..."
+[ -z "$TOKEN" ] && { TOKEN=$TELEGRAM_TOKEN; log "TOKEN is '$TOKEN'"; }
+[ -z "$CHAT" ] && { CHAT=$TELEGRAM_CHAT; log "CHAT is '$CHAT'"; }
 
-log "Importing config file(s)..."
-
-for f in /etc/telegram.sh.conf ~/.telegram.sh; do
-	log "looking for $f"
-	[ -r $f ] && . $f
+log "Importing config files..."
+for f in ~/.telegram-sh.conf /etc/telegram-sh.conf; do
+	if [ -r $f ]; then
+		log "Reading $f"
+		[ -z "$TOKEN" ] && { TOKEN=$(cat "$f" | grep "^TOKEN=" | cut -d'=' -f2); log "TOKEN is '$TOKEN'"; }
+		[ -z "$CHAT" ] && { CHAT=$(cat "$f" | grep "^CHAT_ID=" | cut -d'=' -f2); log "CHAT is '$CHAT'"; }
+	fi
 done
-
-[ -z "$TOKEN" ] && TOKEN=$TELEGRAM_TOKEN
-[ -z "$ACHAT" ] && ACHAT=$TELEGRAM_CHAT
-[ -n "$TELEGRAM_DISABLE_WEB_PAGE_PREVIEW" ] && DISABLE_WEB_PAGE_PREVIEW="$TELEGRAM_DISABLE_WEB_PAGE_PREVIEW"
-[ -n "$TELEGRAM_DISABLE_NOTIFICATION" ] && DISABLE_NOTIFICATION="$TELEGRAM_DISABLE_NOTIFICATION"
-
-log "TOKEN is now '$TOKEN'"
-log "ACHAT is now '$ACHAT'"
-log "DISABLE_WEB_PAGE_PREVIEW is now $DISABLE_WEB_PAGE_PREVIEW"
-log "DISABLE_NOTIFICATION is now $DISABLE_NOTIFICATION"
 
 if [ -z "$TOKEN" ]; then
 	echo "No bot token was given."
 	exit 1
 fi
 
-if [ -z "$ACHAT" ] && [ -z "$ACTION" ]; then
+if [ -z "$CHAT" ] && [ -z "$ACTION" ]; then
 	echo "No chat given."
 	exit 1
 fi
@@ -244,7 +263,7 @@ fi
 
 [ "$DISABLE_NOTIFICATION" = true ] && CURL_OPTIONS="$CURL_OPTIONS --form-string disable_notification=true"
 
-for id in "$ACHAT"; do
+for id in "$CHAT"; do
 	MY_CURL_OPTIONS="$CURL_OPTIONS --form-string chat_id=$id $URL$TOKEN/$METHOD"
 	if [ "$DRY_RUN" = true ]; then
 		echo "Executing: curl $MY_CURL_OPTIONS"

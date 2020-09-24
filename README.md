@@ -55,52 +55,43 @@ HTTPS_PROXY="socks5://127.0.0.1:1234" telegram -m "Hello, World."
 
 ## Requirements
 
-Only shell `sh` and `curl`.
+Only a basic shell `sh` and `curl`.
 
-## Installation / configuration
+## Installation
 
-* Grab the latest `telegram` file from this repository and put it somewhere.
-* Create a bot at telegram:
-  * Search for the user `@botfather` at telegram and start a chat with him.
-  * Use the `/newbot` command to create a new bot. Keep the given token.
-* Use your telegram client to send any message to your new bot. 
-* Find your chat id runnung telegram.sh with `-l`: `telegram -t <TOKEN> -l`.
-* You now have your token and your chat id. Send yourself a first message:  
-    `telegram -t <TOKEN> -c <CHAT ID> -m "Hello there."`
+Grab the latest `telegram` file from this repository and put it somewhere.
 
-Carrying the token and the chat id around can be quite cumbersome. You can
-define them in 4 different ways:
+### Create a Telegram Bot
 
-1. In a file `/etc/telegram.sh.conf`.
-2. In a file `~/.telegram.sh`.
-3. In environment variables TELEGRAM_TOKEN and TELEGRAM_CHAT.
-4. As seen above as parameters.
+To create a new bot on Telegram:
 
-Later variants overwrite earlier variants, so you could define token and
-chat in `/etc/telegram.sh.conf` and then overwrite the token with your own
-in `~/.telegram.sh` or on the command line.
+  * Search for the user `@botfather` and start to chat
+  * Create a new bot sending `/newbot`
+  * Keep the given token (and keep it secret!)
+  * Send any message to your new bot to activate it
+  * Find your chat_id running: `telegram -t <token> -l`
 
-The files should look like this:
-
-```bash
-TELEGRAM_TOKEN="123456:AbcDefGhi-JlkMno"
-TELEGRAM_CHAT="12345678"
+You now have your token and your chat_id, try it:
+```
+  telegram -t <token> -c <chat_id> -m "Hello there!"
 ```
 
-Please be aware that you should keep your token a secret.
+### Configuration
 
-You can add other options here, like:
+ You can define <token> and <chat_id> by:
 
-```bash
-TELEGRAM_DISABLE_WEB_PAGE_PREVIEW=true  # will behave like  -D option"
-TELEGRAM_DISABLE_NOTIFICATION=true      # will behave like  -N option"
+  1. Command line options: -t <token> -c <chat_id>
+  2. Environment variables: TELEGRAM_TOKEN and TELEGRAM_CHAT
+  3. User-based config file: ~/.telegram-sh.conf
+  4. Global config file: /etc/telegram-sh.conf
+
+The earliest take precedence, so you can define general <token> in
+`~/telegram-sh.conf` and then overwrite it using `-t` on command line.
+
+Config file contents should be like:
+
 ```
-
-### Proxy Settings
-
-You can also add permanent proxy settings to config files by adding:
-
-```bash
-export HTTPS_PROXY="socks5://127.0.0.1:1234"
+TOKEN=123456:AbcDefGhi-JlkMno
+CHAT_ID=12345678
 ```
-See the curl documentation for more information about which proxy protocols are supported.
+Please be aware that you should keep your token secret.
