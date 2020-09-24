@@ -88,4 +88,4 @@ You now have your token and your chat_id, try it:
 The earliest take precedence, so you can define general <token> in
 `~/telegram-sh.conf` and then overwrite it using `-t` on command line.
 
-See config file example: <telegram-sh.conf>.
+See config file example: [`telegram-sh.conf`](telegram-sh.conf).
